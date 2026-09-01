@@ -1,23 +1,9 @@
 # gridcast
 
-**California grid demand against local weather — and how accurately both were forecast.**
+**California grid demand versus local weather data visualizer**
 
-Most weather-and-energy dashboards stop at "here is load, here is temperature, they
-correlate." gridcast goes one step further and asks the question that actually needs
-data to answer:
-
-> When the weather forecast missed, did the load forecast miss too?
-
-That is answerable because both upstream sources publish their own past predictions
-alongside what actually happened. CAISO's demand feed carries the day-ahead and
-hour-ahead forecasts in the same row as the actual, and Open-Meteo's Previous Runs
-API returns, for every hour, what the model predicted 1–7 days earlier. Joining those
-two error series is the thing this project exists to do.
-
-> **Live demo:** _add your deployment URL here_ — see [DEPLOY.md](DEPLOY.md).
-<!-- Drop a screenshot at docs/screenshot.png and uncomment:
-![gridcast](docs/screenshot.png) -->
-
+> **Live demo:** Deployment URL Pending — see [DEPLOY.md](DEPLOY.md).
+> 
 ---
 
 ## Quickstart
@@ -38,14 +24,13 @@ make backfill
 make serve
 ```
 
-Then open <http://127.0.0.1:8000>. The backfill pulls two years of CAISO history and
-weather for Los Angeles and Fresno; the first run takes roughly ten minutes, and
-re-runs are near-instant because every immutable response is cached on disk.
+Then open <http://127.0.0.1:8000>.
+The backfill pulls two years of CAISO history and weather; the first run takes roughly ten minutes, and re-runs are near-instant as every immutable response is cached.
 
 **No API keys are required.** CAISO and Open-Meteo are both keyless. An optional free
 [EIA key](https://www.eia.gov/opendata/) in `.env` extends history back to 2015.
 
-To preview exactly what a static host will serve, with no API running at all:
+To preview a static host, with no API running at all:
 
 ```bash
 make static
@@ -55,7 +40,7 @@ make static
 
 ## What it shows
 
-| View | What it answers |
+| View | Description |
 |---|---|
 | **Timeline** | Demand, day-ahead and hour-ahead forecasts, and temperature on one scrubable axis — past, present, and seven days forward. |
 | **Load response** | Every hour as a point on a temperature-vs-demand scatter, coloured by hour of day. The V-shaped response, directly. |
@@ -75,17 +60,9 @@ Every endpoint below was verified live, not taken from documentation.
 | [Open-Meteo](https://open-meteo.com/) | none | ERA5 to 1940; forecasts to +16d; past runs to 2021 | All weather, including archived forecasts |
 | [EIA API v2](https://www.eia.gov/opendata/) | free key | hourly, back to **2015-07-01** | Optional deep-history backbone |
 
-### Why not AccuWeather or weather.com
-
-Both were evaluated and rejected. AccuWeather's free tier is now a 14-day trial
-(cheapest ongoing plan $2/month, no bulk history); The Weather Company is
-enterprise-only behind a contact form. More to the point, neither sells what this
-project needs most — years of hourly history and an archive of past forecast runs —
-at any tier a personal project would reach.
-
 ### The Today's Outlook endpoints
 
-These are undocumented — they are what the CAISO page fetches for itself:
+Lacking documentation — they are what the CAISO page fetches for itself:
 
 ```bash
 curl 'https://www.caiso.com/outlook/current/demand.csv'
@@ -119,10 +96,10 @@ CAISO / Open-Meteo / EIA
                                   web/           one frontend, either backend
 ```
 
-Four decisions worth explaining:
+Key architectural decisions:
 
-**Everything is stored in UTC.** Pacific wall-clock exists only at the two edges, and
-all of the conversion lives in `timeutil.py` behind tests. See the gotcha below.
+**Everything is stored in UTC (obviously)** Pacific wall-clock exists only at the two edges, and
+all of the conversion lives in `timeutil.py` behind tests.
 
 **Time bucketing is chosen from the requested span.** Eight years of 5-minute demand
 is ~840k points per series, which no plotting library survives. `pick_bucket` keeps
@@ -139,12 +116,13 @@ way to treat a free public feed.
 
 ---
 
-## The gotcha that eats weekends
+## Snags to be aware of...
 
 CAISO publishes bare `HH:MM` labels on a fixed Pacific grid. Twice a year that grid
 lies, and a naive `date + HH:MM` parse silently corrupts every downstream average for
-those days:
+those days.
 
+Daylight savings consideration:
 - **Spring forward** — 02:00–02:55 PT does not exist. CAISO still emits the rows, blank,
   to keep the file at 288 slots. Materialising them invents an hour that never happened.
 - **Fall back** — 01:00–01:59 PT happens twice, but CAISO publishes only one set of
