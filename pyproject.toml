@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gridcast"
+version = "0.1.0"
+description = "California grid demand vs. weather, including how well both were forecast."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = [
+    "duckdb>=1.0",
+    # DuckDB's Python client needs pytz to hand back TIMESTAMPTZ values.
+    # pandas 2.x dropped it as a hard dependency, so declare it explicitly --
+    # without it every query touching ts_utc fails on a clean install.
+    "pytz>=2024.1",
+    "pandas>=2.0",
+    "pyarrow>=14.0",
+    "httpx>=0.27",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "typer>=0.12",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[project.scripts]
+gridcast = "gridcast.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gridcast"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# Typer and FastAPI both express defaults as calls in the signature; B008
+# is a false positive for that idiom.
+"src/gridcast/cli.py" = ["B008"]
+"src/gridcast/api.py" = ["B008"]

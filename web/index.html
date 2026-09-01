@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gridcast — California grid vs. weather</title>
+<meta name="description" content="California grid demand against Los Angeles weather, including how accurately both were forecast.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>⚡</text></svg>">
+<link rel="stylesheet" href="style.css">
+<!-- plotly-basic registers exactly the three trace types gridcast uses
+     (scatter, bar, pie) and is 347KB over the wire against 1.3MB for the
+     full build -- about 73% of a first visit. Verified: the rangeslider,
+     secondary y-axis, shapes, annotations and subplot grid all work, and
+     the response curve renders a full year (8,711 SVG points) in ~94ms,
+     zooming in ~156ms. Switching to plotly.min.js would cost ~955KB per
+     first visit and buy nothing. If you add a trace type beyond those
+     three, move up to plotly-cartesian (436KB) rather than the full build. -->
+<script src="https://cdn.plot.ly/plotly-basic-2.35.2.min.js" charset="utf-8"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="bolt" aria-hidden="true">⚡</span>
+    <div>
+      <h1>gridcast</h1>
+      <p class="tagline">California grid demand vs. weather — and how well both were forecast</p>
+    </div>
+  </div>
+  <div class="status" id="status" role="status" aria-live="polite">
+    <span class="dot" id="mode-dot"></span><span id="mode-label">connecting…</span>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" class="tab is-active" data-tab="timeline">Timeline</button>
+  <button role="tab" class="tab" data-tab="response">Load response</button>
+  <button role="tab" class="tab" data-tab="accuracy">Forecast accuracy</button>
+  <button role="tab" class="tab" data-tab="fuel">Fuel mix</button>
+</nav>
+
+<section class="controls">
+  <div class="control">
+    <label for="location">Weather at</label>
+    <select id="location"></select>
+  </div>
+  <div class="control">
+    <span class="control-label">Window</span>
+    <div class="segmented" id="presets" role="group" aria-label="Time window"></div>
+  </div>
+  <div class="control">
+    <span class="control-label">Units</span>
+    <div class="segmented" id="units" role="group" aria-label="Temperature units">
+      <button data-unit="F" class="is-active">°F</button>
+      <button data-unit="C">°C</button>
+    </div>
+  </div>
+  <div class="control grow"></div>
+  <div class="control"><span class="hint" id="bucket-hint"></span></div>
+</section>
+
+<main>
+  <!-- Timeline -->
+  <section class="panel" id="panel-timeline">
+    <div class="chart" id="chart-timeline"></div>
+    <div class="notes">
+      <p><strong>Solid</strong> lines are what happened; <strong>dashed</strong> are forecasts.
+      The shaded band to the right is the future — CAISO's 7-day-ahead load forecast from OASIS
+      against Open-Meteo's temperature forecast. Drag the slider beneath the chart to scrub, or
+      box-select on the plot to zoom.</p>
+    </div>
+  </section>
+
+  <!-- Load response -->
+  <section class="panel is-hidden" id="panel-response">
+    <div class="chart" id="chart-response"></div>
+    <div class="notes">
+      <p>Every hour in the window as one point. The curve is <strong>V-shaped</strong>: demand
+      climbs both above and below the comfort band, which is why load models are built on
+      cooling/heating degree hours rather than on raw temperature. Colour is hour of day —
+      the upper arm is late-afternoon air conditioning.</p>
+    </div>
+  </section>
+
+  <!-- Forecast accuracy -->
+  <section class="panel is-hidden" id="panel-accuracy">
+    <div class="chart tall" id="chart-accuracy"></div>
+    <div class="notes">
+      <p>Top: CAISO's day-ahead load forecast error over time, and its average absolute error by
+      hour of day. Bottom left: Open-Meteo's temperature error by how far ahead it was predicting.
+      Bottom right is the question this project exists to ask — <strong>on days when the weather
+      forecast missed, did the load forecast miss too?</strong> Each point is one day.</p>
+    </div>
+  </section>
+
+  <!-- Fuel mix -->
+  <section class="panel is-hidden" id="panel-fuel">
+    <div class="chart" id="chart-fuel"></div>
+    <div class="notes">
+      <p>Generation by source, stacked. The overlaid line is solar irradiance at the selected
+      location — it should track the solar band closely, and where it does not, clouds or
+      curtailment are the usual explanation. Negative batteries means charging.</p>
+    </div>
+  </section>
+
+  <div class="empty is-hidden" id="empty">
+    <p>No data for this window yet.</p>
+    <p class="hint">Run <code>gridcast backfill --days 730</code>, then <code>gridcast export</code>.</p>
+  </div>
+</main>
+
+<footer>
+  <p>
+    Data: <a href="https://www.caiso.com/todays-outlook">CAISO Today's Outlook</a> ·
+    <a href="https://oasis.caiso.com">CAISO OASIS</a> ·
+    <a href="https://open-meteo.com/">Open-Meteo</a> (CC-BY 4.0) ·
+    <a href="https://www.eia.gov/opendata/">EIA</a>.
+    Times shown in America/Los_Angeles. <span id="generated"></span>
+  </p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

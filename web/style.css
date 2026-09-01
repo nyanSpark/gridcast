@@ -1,0 +1,130 @@
+/* Light and dark are both first-class: the palette is defined as tokens on
+   :root and re-declared under prefers-color-scheme. Plotly reads the resolved
+   values at render time (see readTheme() in app.js) so the charts follow. */
+:root {
+  color-scheme: light dark;
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --border: #e2e1dd;
+  --text: #1c1c1a;
+  --muted: #6c6b66;
+  --faint: #9b9a94;
+  --accent: #d2691e;
+  --accent-soft: #f0a868;
+  --cool: #2b7fbd;
+  --cool-soft: #7fc0e8;
+  --grid: #ececea;
+  /* Hover tooltips sit above the chart, so they get their own elevated
+     surface rather than reusing --surface, which would blend into the panel. */
+  --tooltip-bg: #ffffff;
+  --tooltip-fg: #1c1c1a;
+  --tooltip-border: #cfcec9;
+  --shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16161a;
+    --surface: #1e1e23;
+    --border: #33333c;
+    --text: #ececeb;
+    --muted: #9b9aa3;
+    --faint: #6e6d77;
+    --accent: #f0954a;
+    --accent-soft: #b86a2a;
+    --cool: #5eb3ec;
+    --cool-soft: #2f6f9e;
+    --grid: #2a2a31;
+    --tooltip-bg: #2b2b33;
+    --tooltip-fg: #ececeb;
+    --tooltip-border: #4a4a56;
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.55 ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--cool); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: .9em; background: var(--grid); padding: .1em .4em; border-radius: 4px;
+}
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1.1rem clamp(1rem, 3vw, 2rem) .9rem;
+  border-bottom: 1px solid var(--border); background: var(--surface);
+  flex-wrap: wrap;
+}
+.brand { display: flex; align-items: center; gap: .85rem; }
+.bolt { font-size: 1.7rem; line-height: 1; }
+h1 { margin: 0; font-size: 1.28rem; letter-spacing: -.015em; font-weight: 650; }
+.tagline { margin: .12rem 0 0; color: var(--muted); font-size: .87rem; }
+.status { display: flex; align-items: center; gap: .5rem; font-size: .82rem; color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+.dot.live { background: #3fa66a; }
+.dot.static { background: var(--cool); }
+
+.tabs {
+  display: flex; gap: .25rem; padding: 0 clamp(1rem, 3vw, 2rem);
+  border-bottom: 1px solid var(--border); background: var(--surface); overflow-x: auto;
+}
+.tab {
+  appearance: none; border: 0; background: none; color: var(--muted);
+  font: inherit; font-size: .9rem; padding: .7rem .95rem; cursor: pointer;
+  border-bottom: 2px solid transparent; white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab.is-active { color: var(--text); border-bottom-color: var(--accent); font-weight: 550; }
+
+.controls {
+  display: flex; align-items: flex-end; gap: 1.4rem; flex-wrap: wrap;
+  padding: .9rem clamp(1rem, 3vw, 2rem);
+}
+.control { display: flex; flex-direction: column; gap: .35rem; }
+.control.grow { flex: 1; }
+.control label, .control-label {
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--faint);
+}
+select {
+  font: inherit; padding: .4rem .6rem; border-radius: 7px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+.segmented { display: flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+.segmented button {
+  appearance: none; border: 0; background: var(--surface); color: var(--muted);
+  font: inherit; font-size: .85rem; padding: .4rem .75rem; cursor: pointer;
+  border-right: 1px solid var(--border);
+}
+.segmented button:last-child { border-right: 0; }
+.segmented button:hover { color: var(--text); }
+.segmented button.is-active { background: var(--accent); color: #fff; }
+.hint { font-size: .78rem; color: var(--faint); }
+
+main { padding: 0 clamp(1rem, 3vw, 2rem) 2rem; }
+.panel.is-hidden, .empty.is-hidden { display: none; }
+.chart {
+  height: 520px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow);
+}
+.chart.tall { height: 760px; }
+.notes { max-width: 68ch; margin: 1rem 0 0; color: var(--muted); font-size: .89rem; }
+.notes strong { color: var(--text); font-weight: 600; }
+.empty { text-align: center; padding: 5rem 1rem; color: var(--muted); }
+
+footer {
+  border-top: 1px solid var(--border); padding: 1.1rem clamp(1rem, 3vw, 2rem) 2rem;
+  color: var(--faint); font-size: .8rem;
+}
+footer p { margin: 0; }
+
+@media (max-width: 640px) {
+  .chart { height: 420px; }
+  .chart.tall { height: 900px; }
+  .controls { gap: 1rem; }
+}
