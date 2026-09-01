@@ -2,7 +2,10 @@
 
 **California grid demand versus local weather data visualizer**
 
-> **Live demo:** Deployment URL Pending — see [DEPLOY.md](DEPLOY.md).
+<img width="1365" height="938" alt="gridcast" src="https://github.com/user-attachments/assets/3829d256-59dc-4c6c-a1bd-9db17206cbaa" />
+
+
+> **Live demo:** [Deployment URL Pending](https://gridcast-eight.vercel.app/)
 > 
 ---
 
