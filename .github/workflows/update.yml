@@ -2,10 +2,10 @@ name: update data
 
 on:
   schedule:
-    # Every 3 hours. Hourly also works -- change to '0 * * * *' -- but each run
-    # commits refreshed Parquet + JSON, so a faster cadence grows the repo
-    # faster. See DEPLOY.md for the Git LFS / release-asset alternatives.
-    - cron: '17 */3 * * *'
+    # Every 6 hours. Each run commits refreshed JSON, so a faster cadence grows
+    # the repo faster -- '17 */3 * * *' (4x/day -> 8x/day) is fine if you want
+    # fresher data and don't mind roughly double the growth.
+    - cron: '17 */6 * * *'
   workflow_dispatch:
 
 # Never let two runs write the store at once.
@@ -41,10 +41,23 @@ jobs:
         run: uv run gridcast update --verbose
 
       - name: Render static site data
+        run: uv run gridcast export
+
+      # Parquet is ~5.9MB of already-compressed binary, so git can neither
+      # shrink nor delta it -- every snapshot commit stores a near-full new
+      # copy, and it dominates repo growth. The website never reads it; it
+      # exists so `gridcast init` gives a fresh clone real data. Weekly is
+      # plenty for that, and cuts growth by roughly an order of magnitude.
+      - name: Snapshot Parquet (weekly)
         run: |
-          uv run gridcast export
-          uv run gridcast snapshot
-          uv run gridcast stats
+          if [ "$(date -u +%u)" = "7" ] && [ "$(date -u +%H)" -lt 6 ]; then
+            echo "weekly snapshot"
+            uv run gridcast snapshot
+          else
+            echo "skipping Parquet snapshot (not the weekly window)"
+          fi
+
+      - run: uv run gridcast stats
 
       - name: Commit if anything changed
         run: |

@@ -51,17 +51,25 @@ workflow succeeds without it.
 
 ### Watch out for
 
-**Repo growth.** Each run commits refreshed Parquet and JSON, which sounds alarming
--- a full snapshot is ~9 MB. In practice git delta-compresses consecutive snapshots
-very well: measured over six commits, the entire `.git` packed to 6.3 MB, *less than
-one* working-tree copy, and a refresh carrying genuinely new data cost ~156 KB packed.
-At the default 3-hour cadence that is roughly 1 MB/day, so a few hundred MB after a
-year. Comfortable, but not free. If it ever becomes a problem:
+**Repo growth.** This is the one thing that actually accumulates, and it is worth
+understanding what drives it. Measured with six locations:
 
-- move the Parquet snapshots to [Git LFS](https://git-lfs.com/), or
-- drop the `gridcast snapshot` step from the cron job and run it weekly instead —
-  only `web/data/` needs to be fresh for the site, or
-- publish snapshots as release assets rather than committing them.
+| | Raw | After gzip | Deltas between commits? |
+|---|---|---|---|
+| `web/data/*.json` (121 files) | 12.5 MB | 3.0 MB | Yes — text, compresses 4x |
+| `data/parquet/*.parquet` (8 files) | 5.9 MB | 5.86 MB | **No** — already compressed |
+
+Parquet is the smaller of the two and yet dominates growth, because git can neither
+shrink nor delta it: every snapshot stores a near-full new copy. The website never
+reads Parquet — it exists only so `gridcast init` gives a fresh clone real data.
+
+So the scheduled job **exports JSON every run but snapshots Parquet only weekly**, and
+runs every 6 hours rather than every 3. Together those cut growth by roughly an order
+of magnitude versus committing everything every 3 hours (~26 MB/day, ~9 GB/year, which
+would eventually draw a warning from GitHub).
+
+To trade the other way, edit `.github/workflows/update.yml`: the cron line controls
+cadence, and the "Snapshot Parquet (weekly)" step controls snapshot frequency.
 
 **Adding locations multiplies the export.** Files are written per location per preset,
 so six locations is 6× the JSON. Restrict the cron job with `-l los-angeles` if you
