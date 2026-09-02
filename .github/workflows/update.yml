@@ -5,7 +5,7 @@ on:
     # Every 6 hours. Each run commits refreshed JSON, so a faster cadence grows
     # the repo faster -- '17 */3 * * *' (4x/day -> 8x/day) is fine if you want
     # fresher data and don't mind roughly double the growth.
-    - cron: '17 */6 * * *'
+    - cron: '15 6 * * *'
   workflow_dispatch:
 
 # Never let two runs write the store at once.
